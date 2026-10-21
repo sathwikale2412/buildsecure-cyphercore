@@ -1,0 +1,27 @@
+node_modules
+dist
+dist-ssr
+*.local
+
+# Local secrets — only the template is tracked
+.env
+.env.*
+!.env.example
+.netlify
+.vercel
+
+# Python artifacts from the gateway service
+__pycache__/
+*.pyc
+.venv/
+
+logs
+*.log
+npm-debug.log*
+
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+.vercel
