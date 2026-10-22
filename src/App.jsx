@@ -34,7 +34,7 @@ export default function App() {
 
   useEffect(() => {
     let alive = true
-    health().then((result) => alive && setGateway({ checked: true, ready: result.ok }))
+    health().then((result) => alive && setGateway({ checked: true, ready: Boolean(result.ok && result.data?.configured) }))
     if (!isSupabaseConfigured) {
       setPhase('auth')
       return () => {
@@ -95,6 +95,14 @@ export default function App() {
     if (confirm) {
       say('info', 'Account created. Confirm the address from the email Supabase sends, then sign in.')
       setMode('login')
+      setBusy(false)
+      return
+    }
+    if (!supabase) {
+      // The gateway can only issue tokens; the SPA needs its own client to accept them, and
+      // that client is null unless VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY were present
+      // when Vite built the bundle. Saying so beats a button stuck on "Working…".
+      say('error', 'Signed in, but this build has no database client — add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to the project and redeploy.')
       setBusy(false)
       return
     }
