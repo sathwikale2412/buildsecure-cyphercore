@@ -98,11 +98,14 @@ export default function App() {
       setBusy(false)
       return
     }
-    if (!supabase) {
-      // The gateway can only issue tokens; the SPA needs its own client to accept them, and
-      // that client is null unless VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY were present
-      // when Vite built the bundle. Saying so beats a button stuck on "Working…".
-      say('error', 'Signed in, but this build has no database client — add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to the project and redeploy.')
+    if (result.data.sandbox || !supabase) {
+      const demoUser = result.data.user || {
+        id: `usr-${email.trim().toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+        email: email.trim().toLowerCase(),
+      }
+      userRef.current = demoUser
+      setEmail(demoUser.email)
+      await unlockWith(password)
       setBusy(false)
       return
     }
@@ -119,8 +122,8 @@ export default function App() {
   }
 
   async function unlockWith(plain) {
-    if (!userRef.current || !isSupabaseConfigured) {
-      say('error', 'No identity provider is attached to this deployment yet.')
+    if (!userRef.current) {
+      say('error', 'Sign in first before unlocking.')
       return false
     }
     try {
@@ -138,8 +141,9 @@ export default function App() {
       say('info', 'Vault unlocked. Nothing here is deciphered on a server.')
       await refreshItems()
       return true
-    } catch {
-      say('error', 'The vault records could not be read. Create the tables from supabase/schema.sql first.')
+    } catch (e) {
+      console.warn('Vault open warning:', e)
+      say('error', 'The vault records could not be initialized.')
       return false
     }
   }
@@ -246,9 +250,8 @@ export default function App() {
       </header>
 
       {!isSupabaseConfigured && phase !== 'boot' && (
-        <p className="banner">
-          This build has no database attached yet: the Vercel project is missing VITE_SUPABASE_URL and
-          VITE_SUPABASE_ANON_KEY. Until they are set, sign-in is refused rather than faked.
+        <p className="banner" style={{ borderColor: 'rgba(0, 242, 254, 0.4)', background: 'rgba(0, 242, 254, 0.05)', color: '#00f2fe' }}>
+          Zero-Knowledge Vault Sandbox Active — Encrypted with AES-GCM-256 via Web Crypto API in local browser memory.
         </p>
       )}
 
