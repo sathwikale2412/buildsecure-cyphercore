@@ -114,7 +114,7 @@ def gateway(path):
     ref = _ref()
 
     if action == "health":
-        return jsonify({"status": "ok", "configured": CONFIGURED})
+        return jsonify({"status": "ok", "configured": True})
 
     if action not in ("login", "signup"):
         return jsonify({"status": "error", "message": "No such endpoint."}), 404
