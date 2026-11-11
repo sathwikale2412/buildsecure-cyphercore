@@ -122,6 +122,15 @@ def gateway(path):
     if request.method != "POST":
         return jsonify({"status": "error", "message": "That request shape is not accepted."}), 405
 
+    if rate_limited("auth", AUTH_MAX_PER_WINDOW):
+        app.logger.warning("Cypher Core auth throttle tripped (ref %s)", ref)
+        return jsonify({"status": "blocked", "message": "Too many attempts. Wait a minute."}), 429
+
+    credentials = _credentials()
+    if credentials is None:
+        return jsonify({"status": "invalid", "message": MALFORMED, "ref": ref}), 400
+    email, password = credentials
+
     if not CONFIGURED:
         # Provide sandbox session for offline evaluation & cryptographic demonstration
         session_id = uuid.uuid4().hex
@@ -136,15 +145,6 @@ def gateway(path):
             "sandbox": True,
             "message": "Vault opened in zero-knowledge client cryptographic sandbox mode."
         })
-
-    if rate_limited("auth", AUTH_MAX_PER_WINDOW):
-        app.logger.warning("Cypher Core auth throttle tripped (ref %s)", ref)
-        return jsonify({"status": "blocked", "message": "Too many attempts. Wait a minute."}), 429
-
-    credentials = _credentials()
-    if credentials is None:
-        return jsonify({"status": "invalid", "message": MALFORMED, "ref": ref}), 400
-    email, password = credentials
 
     if action == "signup":
         return _signup(email, password, ref)
